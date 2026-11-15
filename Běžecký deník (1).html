@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Běžecký deník</title>
+<style>
+:root{--red:#d31f26;--red2:#a8141b;--bg:#fff;--bg2:#faf3f2;--ink:#1d1415;--mut:#7a6a6b;--line:#ecdcdb;--card:#fff;--ok:#d31f26;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150f10;--bg2:#1e1517;--ink:#f6ecec;--mut:#b09a9b;--line:#38292b;--card:#1e1517;--red:#ee3a41}}
+:root[data-theme="dark"]{--bg:#150f10;--bg2:#1e1517;--ink:#f6ecec;--mut:#b09a9b;--line:#38292b;--card:#1e1517;--red:#ee3a41}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Trebuchet MS",Verdana,system-ui,sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0;line-height:1.15}
+header{background:var(--red);color:#fff;padding:28px 20px 56px;position:relative;overflow:hidden}
+header .in{max-width:980px;margin:auto;position:relative;z-index:2}
+header h1{font-size:clamp(30px,6vw,48px);letter-spacing:-.5px}
+header p{margin:6px 0 0;opacity:.92;max-width:46ch}
+header svg.fl{position:absolute;left:0;bottom:-1px;width:100%;height:46px;z-index:1}
+header svg.fl path{fill:var(--bg)}
+.lvl{margin-top:16px;max-width:420px}
+.lvl b{font-size:18px}
+.bar{height:10px;border-radius:6px;background:rgba(255,255,255,.3);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:#fff;border-radius:6px;transition:width .6s}
+main{max-width:980px;margin:-24px auto 40px;padding:0 16px;position:relative;z-index:3}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{font-size:22px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.st{background:var(--bg2);border-radius:10px;padding:12px;border-left:4px solid var(--red)}
+.st b{display:block;font:700 26px Georgia,serif}
+.st span{color:var(--mut);font-size:13px}
+form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{font-size:13px;color:var(--mut);display:flex;flex-direction:column;gap:4px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+.wide{grid-column:1/-1}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:10px 16px}
+.pri{background:var(--red);color:#fff;font-weight:700}
+.pri:hover{background:var(--red2)}
+.sec{background:var(--bg2);color:var(--ink);border:1px solid var(--line)}
+.err{color:var(--red);font-size:14px;min-height:20px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.bd{text-align:center;padding:12px 6px;border-radius:12px;border:1px solid var(--line);background:var(--bg2)}
+.bd .ic{width:54px;height:54px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font-size:26px;background:var(--red);box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--red)}
+.bd.off{opacity:.55}.bd.off .ic{background:var(--line);filter:grayscale(1);box-shadow:none}
+.bd b{display:block;font-size:13px;line-height:1.2}.bd span{font-size:11px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-weight:600;font-size:12px}
+.tbl{overflow-x:auto}
+.tag{display:inline-block;background:var(--red);color:#fff;border-radius:20px;padding:1px 9px;font-size:12px}
+.tag.t{background:var(--bg2);color:var(--ink);border:1px solid var(--line)}
+.x{background:none;color:var(--mut);padding:2px 8px}
+.x:hover{color:var(--red)}
+.empty{color:var(--mut);padding:10px 0}
+svg text{fill:var(--mut);font:11px "Trebuchet MS",sans-serif}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--red);color:#fff;padding:10px 18px;border-radius:30px;opacity:0;transition:.3s;z-index:9;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+ <div class="in">
+  <h1>Běžecký deník</h1>
+  <p>Zapiš každý běh nebo závod. Statistiky, grafy a odznaky se spočítají samy.</p>
+  <div class="lvl"><b id="lvlName"></b> <span id="lvlNext"></span><div class="bar"><i id="lvlBar" style="width:0"></i></div></div>
+ </div>
+ <svg class="fl" viewBox="0 0 1000 46" preserveAspectRatio="none" aria-hidden="true"><path d="M0 46V30c20-4 30-22 60-26-6 14 8 20 22 18 14-2 18-12 28-18 4 14 16 18 30 16 18-2 22-10 36-14-2 12 8 22 24 22 18 0 28-14 44-16 0 12 10 18 24 16 16-2 24-16 40-18 2 14 14 20 30 18 16-2 22-12 36-16 0 12 10 20 26 18 16-2 26-14 42-16 4 12 14 18 28 16 14-2 22-12 34-14 2 12 12 18 26 16 14-2 24-12 38-14 2 12 12 20 28 18 14-2 22-10 34-14 2 10 12 18 26 18 12 0 22-10 34-12 4 10 14 16 28 14 12-2 22-10 32-12V46z"/></svg>
+</header>
+<main>
+ <section class="card">
+  <h2>Nový záznam</h2>
+  <form id="f" novalidate>
+   <label>Datum<input type="date" id="d" required></label>
+   <label>Název<input id="n" placeholder="Např. Ludgeřovický kros" maxlength="60"></label>
+   <label>Vzdálenost (km)<input id="k" inputmode="decimal" placeholder="10,5"></label>
+   <label>Čas (h:mm:ss nebo mm:ss)<input id="t" placeholder="52:30"></label>
+   <label>Typ<select id="ty"><option>Trénink</option><option>Závod</option></select></label>
+   <label>Povrch<select id="te"><option>Silnice</option><option>Trail</option><option>Kros</option><option>Dráha</option></select></label>
+   <label class="wide">Poznámka<input id="o" placeholder="Počasí, pocity, umístění…" maxlength="120"></label>
+   <div class="row wide"><button class="pri" type="submit">Uložit běh</button><span class="err" id="err" role="alert"></span></div>
+  </form>
+ </section>
+
+ <section class="card"><h2>Přehled</h2><div class="stats" id="stats"></div></section>
+
+ <section class="card">
+  <h2>Roční cíl</h2>
+  <div class="row"><label style="flex-direction:row;align-items:center;gap:8px">Cíl (km)<input id="goal" type="number" min="1" style="width:110px"></label><span id="goalTxt"></span></div>
+  <div class="bar" style="background:var(--line);height:14px;margin-top:10px"><i id="goalBar" style="width:0;background:var(--red)"></i></div>
+ </section>
+
+ <div class="grid2">
+  <section class="card"><h2>Kilometry po měsících</h2><div id="c1"></div></section>
+  <section class="card"><h2>Tempo posledních běhů</h2><div id="c2"></div></section>
+  <section class="card"><h2>Podle povrchu</h2><div id="c3"></div></section>
+  <section class="card"><h2>Nejlepší výkony</h2><div id="best"></div></section>
+ </div>
+
+ <section class="card"><h2>Odznaky <small id="bdCount" style="font:14px 'Trebuchet MS';color:var(--mut)"></small></h2><div class="badges" id="badges"></div></section>
+
+ <section class="card">
+  <h2>Historie</h2>
+  <div class="tbl" id="list"></div>
+ </section>
+
+ <section class="card">
+  <h2>Data</h2>
+  <div class="row">
+   <button class="sec" id="exp">Stáhnout zálohu</button>
+   <button class="sec" id="imp">Nahrát zálohu</button>
+   <button class="sec" id="demo">Vyplnit ukázková data</button>
+   <button class="sec" id="clr">Smazat vše</button>
+   <button class="sec" id="th">Světlý / tmavý režim</button>
+   <input type="file" id="file" accept="application/json" hidden>
+  </div>
+  <p class="empty">Záznamy zůstávají jen v tomto prohlížeči. Pro přenos na jiné zařízení použij zálohu.</p>
+ </section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+var KEY='bezecky-denik-v1',S={runs:[],goal:500},$=function(i){return document.getElementById(i)};
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&Array.isArray(o.runs)){S=o;if(!S.goal)S.goal=500}}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2200)}
+function fmtT(s){s=Math.round(s);var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')}
+function fmtP(s){if(!isFinite(s)||!s)return'–';s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function fmtK(k){return(Math.round(k*10)/10).toLocaleString('cs-CZ')}
+function parseT(v){var p=v.trim().split(':').map(Number);if(!p.length||p.length>3||p.some(function(n){return isNaN(n)||n<0}))return 0;
+ if(p.length===1)return p[0]*60;if(p.length===2)return p[0]*60+p[1];return p[0]*3600+p[1]*60+p[2]}
+function ds(d){return new Date(d+'T12:00:00')}
+function calc(){
+ var r=S.runs.slice().sort(function(a,b){return a.d<b.d?-1:1}),o={};
+ o.sorted=r;o.n=r.length;o.km=0;o.sec=0;o.longest=0;o.best=0;o.races=0;o.terr={};o.months={};
+ var now=new Date(),ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),yr=String(now.getFullYear());
+ o.mKm=0;o.yKm=0;o.maxMonthN=0;o.fast5=false;o.trail=false;o.firstFast=null;
+ r.forEach(function(x){o.km+=x.k;o.sec+=x.s;if(x.k>o.longest)o.longest=x.k;
+  if(x.ty==='Závod')o.races++;o.terr[x.te]=(o.terr[x.te]||0)+x.k;
+  var m=x.d.slice(0,7);o.months[m]=o.months[m]||{k:0,n:0};o.months[m].k+=x.k;o.months[m].n++;
+  if(m===ym)o.mKm+=x.k;if(x.d.slice(0,4)===yr)o.yKm+=x.k;
+  var p=x.s/x.k;if(x.k>=1&&(!o.bestP||p<o.bestP.p))o.bestP={p:p,x:x};
+  if(x.k>=5&&p<=300)o.fast5=true;if(x.te==='Trail'||x.te==='Kros')o.trail=true});
+ Object.keys(o.months).forEach(function(m){if(o.months[m].n>o.maxMonthN)o.maxMonthN=o.months[m].n});
+ o.avgP=o.km?o.sec/o.km:0;o.tn=Object.keys(o.terr).length;return o}
+var BADGES=[
+ ['👟','První krok','Zapiš první běh',function(o){return o.n>=1}],
+ ['🔟','10 km celkem','Nasbírej 10 km',function(o){return o.km>=10}],
+ ['🥉','50 km celkem','Nasbírej 50 km',function(o){return o.km>=50}],
+ ['🥈','100 km celkem','Nasbírej 100 km',function(o){return o.km>=100}],
+ ['🥇','250 km celkem','Nasbírej 250 km',function(o){return o.km>=250}],
+ ['🏆','500 km celkem','Nasbírej 500 km',function(o){return o.km>=500}],
+ ['🌍','1000 km celkem','Nasbírej 1000 km',function(o){return o.km>=1000}],
+ ['5️⃣','Pětka','Jeden běh 5 km a více',function(o){return o.longest>=5}],
+ ['🔥','Desítka','Jeden běh 10 km a více',function(o){return o.longest>=10}],
+ ['🚀','Půlmaraton','Jeden běh 21,1 km a více',function(o){return o.longest>=21.1}],
+ ['👑','Maraton','Jeden běh 42,2 km a více',function(o){return o.longest>=42.195}],
+ ['🎽','Závodník','Zapiš první závod',function(o){return o.races>=1}],
+ ['🏁','Pětkrát na startu','Zapiš 5 závodů',function(o){return o.races>=5}],
+ ['🎖️','Ostřílený','Zapiš 10 závodů',function(o){return o.races>=10}],
+ ['⚡','Pod 5:00 na km','Běh 5 km a více pod 5:00/km',function(o){return o.fast5}],
+ ['🌲','Lesní duch','Zapiš trail nebo kros',function(o){return o.trail}],
+ ['🧭','Všestranný','Tři různé povrchy',function(o){return o.tn>=3}],
+ ['📅','Měsíc v pohybu','8 běhů v jednom měsíci',function(o){return o.maxMonthN>=8}],
+ ['🎯','Cíl splněn','Splň roční cíl',function(o){return o.yKm>=S.goal}]];
+var LV=[['Začátečník',0],['Rozběhaný',25],['Vytrvalec',100],['Silák',300],['Legenda',1000]];
+function render(){
+ var o=calc();
+ var li=0;LV.forEach(function(l,i){if(o.km>=l[1])li=i});
+ $('lvlName').textContent='Úroveň: '+LV[li][0];
+ var nx=LV[li+1];$('lvlNext').textContent=nx?'(do další ještě '+fmtK(nx[1]-o.km)+' km)':'(nejvyšší úroveň)';
+ $('lvlBar').style.width=(nx?Math.min(100,(o.km-LV[li][1])/(nx[1]-LV[li][1])*100):100)+'%';
+ var st=[[fmtK(o.km),'celkem km'],[o.n,'běhů'],[fmtT(o.sec),'celkový čas'],[fmtP(o.avgP)+' /km','průměrné tempo'],
+  [fmtK(o.longest)+' km','nejdelší běh'],[o.races,'závodů'],[fmtK(o.mKm)+' km','tento měsíc'],[fmtK(o.yKm)+' km','letos']];
+ $('stats').innerHTML=st.map(function(s){return'<div class="st"><b>'+s[0]+'</b><span>'+s[1]+'</span></div>'}).join('');
+ var pct=Math.min(100,o.yKm/S.goal*100);$('goal').value=S.goal;
+ $('goalTxt').textContent='Splněno '+Math.round(pct)+' % ('+fmtK(o.yKm)+' z '+fmtK(S.goal)+' km)';$('goalBar').style.width=pct+'%';
+ chartMonths(o);chartPace(o);chartTerr(o);best(o);
+ var got=0;$('badges').innerHTML=BADGES.map(function(b){var ok=b[3](o);if(ok)got++;
+  return'<div class="bd'+(ok?'':' off')+'" title="'+esc(b[2])+'"><div class="ic">'+b[0]+'</div><b>'+b[1]+'</b><span>'+b[2]+'</span></div>'}).join('');
+ $('bdCount').textContent='('+got+' z '+BADGES.length+')';
+ var L=o.sorted.slice().reverse();
+ $('list').innerHTML=L.length?'<table><thead><tr><th>Datum</th><th>Název</th><th>Km</th><th>Čas</th><th>Tempo</th><th></th><th></th></tr></thead><tbody>'+
+  L.map(function(x){return'<tr><td>'+ds(x.d).toLocaleDateString('cs-CZ')+'</td><td>'+esc(x.n||'Běh')+(x.o?'<br><small style="color:var(--mut)">'+esc(x.o)+'</small>':'')+'</td><td>'+fmtK(x.k)+'</td><td>'+fmtT(x.s)+'</td><td>'+fmtP(x.s/x.k)+'</td><td><span class="tag'+(x.ty==='Závod'?'':' t')+'">'+esc(x.ty)+'</span> <span class="tag t">'+esc(x.te)+'</span></td><td><button class="x" data-id="'+x.id+'" aria-label="Smazat záznam">✕</button></td></tr>'}).join('')+'</tbody></table>'
+  :'<p class="empty">Zatím tu nic není. Zapiš první běh ve formuláři nahoře.</p>'}
+function chartMonths(o){
+ var a=[],n=new Date();for(var i=11;i>=0;i--){var d=new Date(n.getFullYear(),n.getMonth()-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');a.push({l:d.toLocaleDateString('cs-CZ',{month:'short'}),v:(o.months[k]||{k:0}).k})}
+ var mx=Math.max.apply(null,a.map(function(x){return x.v}).concat([1])),s='<svg viewBox="0 0 360 180" width="100%" role="img" aria-label="Kilometry po měsících">';
+ a.forEach(function(x,i){var h=x.v/mx*120,X=8+i*29;s+='<rect x="'+X+'" y="'+(140-h)+'" width="22" height="'+h+'" rx="4" fill="var(--red)"/>'+(x.v?'<text x="'+(X+11)+'" y="'+(134-h)+'" text-anchor="middle">'+Math.round(x.v)+'</text>':'')+'<text x="'+(X+11)+'" y="158" text-anchor="middle">'+x.l+'</text>'});
+ $('c1').innerHTML=s+'</svg>'}
+function chartPace(o){
+ var r=o.sorted.filter(function(x){return x.k>=1}).slice(-15);
+ if(r.length<2){$('c2').innerHTML='<p class="empty">Potřebuješ aspoň dva záznamy.</p>';return}
+ var p=r.map(function(x){return x.s/x.k}),mn=Math.min.apply(null,p),mx=Math.max.apply(null,p),rg=(mx-mn)||1;
+ var pts=p.map(function(v,i){return[20+i*(320/(p.length-1)),20+(v-mn)/rg*110]});
+ var s='<svg viewBox="0 0 360 180" width="100%" role="img" aria-label="Tempo posledních běhů"><polyline fill="none" stroke="var(--red)" stroke-width="3" stroke-linejoin="round" points="'+pts.map(function(q){return q.join(',')}).join(' ')+'"/>';
+ pts.forEach(function(q){s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="4" fill="var(--card)" stroke="var(--red)" stroke-width="2.5"/>'});
+ s+='<text x="20" y="168">Nejrychlejší '+fmtP(mn)+'</text><text x="340" y="168" text-anchor="end">Nejpomalejší '+fmtP(mx)+'</text></svg><div class="empty" style="padding:0">Nižší bod v grafu znamená rychlejší tempo (min/km).</div>';
+ $('c2').innerHTML=s}
+function chartTerr(o){
+ var k=Object.keys(o.terr);if(!k.length){$('c3').innerHTML='<p class="empty">Zatím žádná data.</p>';return}
+ var mx=Math.max.apply(null,k.map(function(x){return o.terr[x]}));
+ $('c3').innerHTML=k.map(function(x){return'<div style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span>'+esc(x)+'</span><b>'+fmtK(o.terr[x])+' km</b></div><div class="bar" style="background:var(--line)"><i style="width:'+o.terr[x]/mx*100+'%;background:var(--red)"></i></div></div>'}).join('')}
+function best(o){
+ if(!o.n){$('best').innerHTML='<p class="empty">Zatím žádná data.</p>';return}
+ var L=o.sorted.slice().sort(function(a,b){return b.k-a.k})[0],rows=[['Nejdelší běh',fmtK(L.k)+' km',L.n||'Běh'],['Nejlepší tempo',o.bestP?fmtP(o.bestP.p)+' /km':'–',o.bestP?(o.bestP.x.n||'Běh'):'']];
+ [5,10,21.1].forEach(function(d){var c=o.sorted.filter(function(x){return x.k>=d}).sort(function(a,b){return a.s/a.k-b.s/b.k})[0];
+  rows.push(['Nejrychlejší '+(d===21.1?'půlmaraton':d+' km'),c?fmtT(c.s/c.k*d)+' (odhad z tempa)':'–',c?(c.n||'Běh'):''])});
+ $('best').innerHTML='<table><tbody>'+rows.map(function(r){return'<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td><td style="color:var(--mut)">'+esc(r[2])+'</td></tr>'}).join('')+'</tbody></table>'}
+$('f').addEventListener('submit',function(e){e.preventDefault();
+ var d=$('d').value,k=parseFloat($('k').value.replace(',','.')),s=parseT($('t').value),er=$('err');
+ if(!d){er.textContent='Vyber datum.';return}
+ if(!(k>0)||k>500){er.textContent='Zadej vzdálenost v km, například 10,5.';return}
+ if(!(s>0)){er.textContent='Zadej čas ve tvaru mm:ss nebo h:mm:ss.';return}
+ er.textContent='';var before=BADGES.filter(function(b){return b[3](calc())}).length;
+ S.runs.push({id:Date.now()+''+Math.floor(Math.random()*999),d:d,n:$('n').value.trim(),k:k,s:s,ty:$('ty').value,te:$('te').value,o:$('o').value.trim()});
+ save();render();$('f').reset();$('d').value=today();
+ var after=BADGES.filter(function(b){return b[3](calc())}).length;
+ toast(after>before?'Běh uložen. Nový odznak: '+(after-before)+'×':'Běh uložen')});
+$('list').addEventListener('click',function(e){var b=e.target.closest('button[data-id]');if(!b)return;
+ S.runs=S.runs.filter(function(x){return x.id!==b.getAttribute('data-id')});save();render();toast('Záznam smazán')});
+$('goal').addEventListener('change',function(){var v=parseFloat($('goal').value);if(v>0){S.goal=v;save();render()}});
+$('exp').addEventListener('click',function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='bezecky-denik.json';a.click()});
+$('imp').addEventListener('click',function(){$('file').click()});
+$('file').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();
+ r.onload=function(){try{var o=JSON.parse(r.result);if(!Array.isArray(o.runs))throw 0;S={runs:o.runs,goal:o.goal||500};save();render();toast('Záloha nahrána')}catch(e){toast('Soubor se nepodařilo načíst')}};r.readAsText(f);this.value=''});
+$('clr').addEventListener('click',function(){if(confirm('Opravdu smazat všechny záznamy?')){S={runs:[],goal:S.goal};save();render()}});
+$('demo').addEventListener('click',function(){if(S.runs.length&&!confirm('Ukázková data se přidají k tvým záznamům. Pokračovat?'))return;
+ var T=['Silnice','Silnice','Trail','Silnice','Kros','Dráha'],N=['Ranní rozběh','Večerní běh','Lesní okruh','Tempový trénink','Dlouhý víkendový','Intervaly'],t=new Date();
+ for(var i=0;i<40;i++){var d=new Date(t.getFullYear(),t.getMonth(),t.getDate()-i*3-Math.floor(Math.random()*2)),k=4+Math.random()*9+(i%7===0?8:0),p=300+Math.random()*80-i*.6;
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),race=i%9===4;
+  S.runs.push({id:'demo'+i,d:iso,n:race?'Závod '+(i/9+1|0)+'':N[i%6],k:Math.round(k*10)/10,s:Math.round(k*p),ty:race?'Závod':'Trénink',te:T[i%6],o:''})}
+ save();render();toast('Ukázková data přidána')});
+$('th').addEventListener('click',function(){var r=document.documentElement,dark=getComputedStyle(r).getPropertyValue('--bg').trim()==='#150f10';r.setAttribute('data-theme',dark?'light':'dark')});
+function today(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')}
+load();$('d').value=today();render();
+})();
+</script>
+</body>
+</html>
